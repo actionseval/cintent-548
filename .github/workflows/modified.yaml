@@ -1,0 +1,51 @@
+name: Docs
+
+# CINTENT >> MANUAL_TRIGGER
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     branches:
+#       - main
+on: [repository_dispatch, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+    steps:
+    # CINTENT >> CHANGE_VERSION
+    # - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    # CINTENT >> INSERT_CINTENT
+    - uses: JavidDitty/setup-cintent@3e5b2faf83a2ad32c22a1cd0f86f5f20ea53a5ab
+
+    - name: Install dependencies
+      run: |
+        python3.9 -m pip install --upgrade pip
+        python3.9 -m pip install numpy autodocsumm 'sphinx<6' sphinx_rtd_theme sphinx_gallery sphinxcontrib-inlinesyntaxhighlight sphinx_toolbox
+        cd python
+        python setup.py develop
+        cd ..
+    - name: Build documents with Sphinx
+      run: |
+        cd docs
+        make html
+        cd ..
+
+    # CINTENT >> INSERT_CINTENT
+    - name: Upload CIntent Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ${{ env.CINTENT_ARTIFACT_NAME }}
+        path: ${{ env.CINTENT_LOGS }}
